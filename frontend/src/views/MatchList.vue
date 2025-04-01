@@ -7,7 +7,7 @@
         <select v-model="fixturesStore.selectedWeek" class="form-select form-select-sm" @change="fixturesStore.fetchFixtures">
           <option v-for="week in fixturesStore.weeks" :key="week" :value="week">Hafta {{ week }}</option>
         </select>
-        <button @click="fixturesStore.startSimulation" class="btn btn-success btn-sm" :disabled="fixturesStore.isSimulationActive || fixturesStore.hasOngoingMatches">
+        <button @click="startSimulation" class="btn btn-success btn-sm" :disabled="isSimulationButtonDisabled">
           {{ fixturesStore.isSimulationActive ? 'Simülasyon devam ediyor' : 'Simülasyonu Başlat' }}
         </button>
         <button @click="fixturesStore.resetSimulation" class="btn btn-danger btn-sm">
@@ -33,10 +33,19 @@ import MatchCard from '@/components/MatchListComponents/MatchCard.vue';
 import MatchDetail from '@/components/MatchListComponents/MatchDetail.vue';
 import PlayerStats from '@/components/MatchListComponents/PlayerStats.vue';
 
-import { onMounted, onBeforeUnmount } from 'vue';
+import { onMounted, onBeforeUnmount, computed, ref } from 'vue';
 import { useMatchStore } from '@/stores/matches';
 
 const fixturesStore = useMatchStore();
+
+// Local state for button disabling
+const isSimulationButtonDisabled = ref(false);
+
+const startSimulation = () => {
+  fixturesStore.startSimulation();  // Start the simulation
+  fixturesStore.isSimulationActive = true; // Disable button by updating state
+  isSimulationButtonDisabled.value = true; // Disable the button after the click
+};
 
 onMounted(() => {
   fixturesStore.fetchFixtures();
