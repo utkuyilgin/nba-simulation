@@ -116,31 +116,29 @@ class MatchSimulationService
         $assister = $this->playerRepository->getRandomFromTeamExcept($attackingTeamId, $attacker->id);
         $team = $this->teamRepository->find($attackingTeamId);
 
-        // Şut atılıyor, ancak atış sonrası rebound ekleniyor
+        // rebound added
         $shotType = (rand(1, 100) <= 70) ? 2 : 3;  // %70 ihtimalle 2 sayılık, %30 ihtimalle 3 sayılık
         $baseSuccessRate = ($shotType == 2) ? 67 : 50; // Temel başarı oranı
 
-        // Oyuncunun geçmiş istatistiklerine göre başarı oranını al
         $playerStat = $this->matchPlayerStatsRepository->firstOrNew([
             'match_id' => $match->id,
             'player_id' => $attacker->id,
         ]);
 
-        // Başarı oranını hesapla
+        // calculate success rate
         $currentSuccessRate = ($shotType == 2) ? $playerStat->two_point_percentage ?? 55 : $playerStat->three_point_percentage ?? 55;
         $finalSuccessRate = ($currentSuccessRate + $baseSuccessRate) / 2;
         $success = (rand(1, 100) <= $finalSuccessRate);
 
-        // Şut girişimi kaydedelim
+        // shot type
         if ($shotType == 2) {
             $playerStat->two_point_attempts += 1;
         } else {
             $playerStat->three_point_attempts += 1;
         }
 
-        // Şut başarılı olduysa
+        // if success shot
         if ($success) {
-            // Maç skorunu güncelle
             if ($attackingTeamId == $match->team1_id) {
                 $match->score_team1 += $shotType;
             } else {
@@ -148,8 +146,7 @@ class MatchSimulationService
             }
 
             $playerStat->points += $shotType;
-
-            // Başarı oranlarını güncelle
+            //handle success rates
             if ($shotType == 2) {
                 $playerStat->two_point_success += 1;
                 $playerStat->two_point_percentage = $this->calculateSuccessRate(
@@ -164,7 +161,7 @@ class MatchSimulationService
                 );
             }
 
-            // Asist yapan oyuncunun istatistiklerini güncelle
+            // assister stat updating
             if ($assister) {
                 $assisterStat = $this->matchPlayerStatsRepository->firstOrNew([
                     'match_id' => $match->id,
@@ -177,8 +174,8 @@ class MatchSimulationService
 
             $playerStat->save();
 
-            // Fast break (hızlı hücum) durumu simüle edelim
-            if (rand(1, 100) <= 20) { // %20 ihtimalle hızlı hücum
+            // Fast break situation simulation
+            if (rand(1, 100) <= 20) { // 20% chance of fast attack
                 return $this->handleFastBreak($match, $attackingTeamId, $defendingTeamId, $shotType, $attacker, $assister);
             }
 
@@ -192,7 +189,7 @@ class MatchSimulationService
                 'assister_id' => $assister ? $assister->id : null
             ];
         } else {
-            // Başarısız şut
+            // unsuccessful shot
             if ($shotType == 2) {
                 $playerStat->two_point_percentage = $this->calculateSuccessRate(
                     $playerStat->two_point_success,
@@ -207,30 +204,30 @@ class MatchSimulationService
 
             $playerStat->save();
 
-            // Rebound (geri alma) durumu
+            // Rebound situation
             return $this->handleRebound($match, $attackingTeamId, $defendingTeamId, $attacker, $shotType, $playerStat);
         }
     }
 
     private function handleRebound($match, $attackingTeamId, $defendingTeamId, $attacker, $shotType, $playerStat)
     {
-        // Rebound durumu: Rakip takımından topu alacak oyuncu simülasyonu
+        // Rebound situation, steal ball from opponent simulation
         $rebounder = $this->playerRepository->getRandomFromTeam($defendingTeamId);
         $rebounderStat = $this->matchPlayerStatsRepository->firstOrNew([
             'match_id' => $match->id,
             'player_id' => $rebounder->id,
         ]);
 
-        // Rebound yapan oyuncu istatistiklerini güncelle
+        // Rebounder statistics increase
         $rebounderStat->rebounds += 1;
         $rebounderStat->save();
 
-        // Rebound sonrası fastbreak veya normal hücum durumu
-        if (rand(1, 100) <= 30) { // %30 ihtimalle hızlı hücum
+        // Fastbreak or normal attack status after rebound
+        if (rand(1, 100) <= 30) { // Fast attack with &20 chances
             return $this->handleFastBreak($match, $defendingTeamId, $attackingTeamId, $shotType, $rebounder, null);
         }
 
-        // Normal hücum başlat
+        // Start a normal attack
         return [
             'result' => 'miss',
             'shot_type' => $shotType . '-pointer',
@@ -242,8 +239,8 @@ class MatchSimulationService
 
     private function handleFastBreak($match, $attackingTeamId, $defendingTeamId, $shotType, $attacker, $assister)
     {
-        // Fast break (hızlı hücum): Daha yüksek başarı oranı ile atış
-        $baseSuccessRate = ($shotType == 2) ? 75 : 70;  // Hızlı hücumda başarı oranı %75 (2 sayılık) ve %50 (3 sayılık)
+        // Fast break: Shot with higher success rate
+        $baseSuccessRate = ($shotType == 2) ? 75 : 70;  // Fast break success rate 75% (2-pointers) and 70% (3-pointers)
         $playerStat = $this->matchPlayerStatsRepository->firstOrNew([
             'match_id' => $match->id,
             'player_id' => $attacker->id,
@@ -263,7 +260,7 @@ class MatchSimulationService
             $playerStat->points += $shotType;
             $playerStat->save();
 
-            // Asist yapıldıysa
+            // If an assist was made
             if ($assister) {
                 $assisterStat = $this->matchPlayerStatsRepository->firstOrNew([
                     'match_id' => $match->id,
