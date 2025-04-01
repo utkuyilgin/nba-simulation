@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: backend_app
+    ports:
+      - "9090:9001"
+    volumes:
+      - ./backend:/var/www           # Mount the backend folder correctly
+      - ./backend/node_modules:/var/www/node_modules  # Ensure node_modules is persisted
+    networks:
+      - app-network
+    environment:
+      - REDIS_HOST=redis
+    working_dir: /var/www
+    command: |
+      bash -c "npm install && composer install && php artisan serve --host=0.0.0.0 --port=9001"
+
+
+  db:
+    image: mysql:5.7
+    container_name: backend_db
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: backend_db
+    volumes:
+      - ./db_data:/var/lib/mysql
+    ports:
+      - "3388:3306"
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend_app
+    ports:
+      - "8020:8020"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - app-network
+    command: npm run serve
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local
