@@ -14,10 +14,17 @@ services:
       - app-network
     environment:
       - REDIS_HOST=redis
+      - DB_HOST=db
+      - DB_DATABASE=backend_db
+      - DB_USERNAME=root
+      - DB_PASSWORD=secret
+      - DB_PORT=3306
     working_dir: /var/www
     command: |
       bash -c "npm install && composer install && php artisan serve --host=0.0.0.0 --port=9001"
-
+    depends_on:
+      - db
+      - redis
 
   db:
     image: mysql:5.7
@@ -25,8 +32,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: secret
       MYSQL_DATABASE: backend_db
+      MYSQL_ROOT_HOST: '%'  # Allow connections from any host
     volumes:
-      - ./db_data:/var/lib/mysql
+      - ./my_db_data:/var/lib/mysql
     ports:
       - "3388:3306"
     networks:
@@ -44,6 +52,8 @@ services:
     networks:
       - app-network
     command: npm run serve
+    depends_on:
+      - backend
 
   redis:
     image: redis:latest
@@ -58,5 +68,5 @@ networks:
     driver: bridge
 
 volumes:
-  db_data:
+  my_db_data:
     driver: local
