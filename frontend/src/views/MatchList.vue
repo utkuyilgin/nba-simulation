@@ -1,19 +1,19 @@
 <template>
   <div class="container py-4">
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 bg-light p-3 rounded">
-      <h1 class="h4 fw-bold">NBA Fikstür</h1>
+      <h1 class="h4 fw-bold">NBA Schedule</h1>
 
       <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
         <select v-model="fixturesStore.selectedWeek" class="form-select form-select-sm" @change="fixturesStore.fetchFixtures">
-          <option v-for="week in fixturesStore.weeks" :key="week" :value="week">Hafta {{ week }}</option>
+          <option v-for="week in fixturesStore.weeks" :key="week" :value="week">Week {{ week }}</option>
         </select>
         <button @click="startSimulation" class="btn btn-success btn-sm" :disabled="isSimulationButtonDisabled">
-          {{ fixturesStore.isSimulationActive ? 'Simülasyon devam ediyor' : 'Simülasyonu Başlat' }}
+          {{ fixturesStore.isSimulationActive ? 'Simulation is ongoing' : 'Start Simulation' }}
         </button>
         <button @click="fixturesStore.resetSimulation" class="btn btn-danger btn-sm">
-          Baştan Başlat
+          Restart
         </button>
-        <span v-if="fixturesStore.isSimulationActive" class="text-success fw-bold small">Simülasyon devam ediyor</span>
+        <span v-if="fixturesStore.isSimulationActive" class="text-success fw-bold small">Simulation is ongoing</span>
       </div>
     </div>
 
@@ -24,7 +24,7 @@
         <PlayerStats :match="match" />
       </div>
     </div>
-    <p v-else class="text-muted text-center mt-4">Bu haftaya ait maç bulunamadı.</p>
+    <p v-else class="text-muted text-center mt-4">No matches found for this week.</p>
   </div>
 </template>
 
