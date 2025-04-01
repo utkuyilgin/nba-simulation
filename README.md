@@ -28,7 +28,8 @@ git clone git@github.com:utkuyilgin/nba-simulation.git
    ```
    This command:
     - Builds and starts all necessary containers
-    - Automatically runs `composer install` and `npm install`
+    - Automatically runs composer install and npm install, but before the 4th step, wait for 3-5 seconds. Here, the composer install and npm install processes may take 3-5 seconds, so please wait. You may encounter an 'artisan command not found' error.
+   
 
 4. Enter the backend container to run migrations and seed the database:
    ```
@@ -52,7 +53,7 @@ git clone git@github.com:utkuyilgin/nba-simulation.git
 
 - **Database Storage**: Database files are stored in a `db_data` folder in the project directory via the following volume configuration:
   ```
-  - ./db_data:/var/lib/mysql
+  - ./my_db_data:/var/lib/mysql
   ```
   To change this behavior, you can remove the `./` prefix to use Docker's internal volume system instead.
 
